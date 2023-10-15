@@ -40,9 +40,9 @@ function formatCurrency(amount) {
 
 function calculateInvestment(amount, period) {
   let result;
-  if (amount <= 5000000) {
+  if (amount <= 3000000) {
     result = (amount + (amount * 0.2)) * (1 + 0.44) / period;
-  } else if (amount <= 8000000) {
+  } else if (amount <= 6000000) {
     result = (amount + (amount * 0.15)) * (1 + 0.44) / period;
   } else {
     result = (amount + (amount * 0.1)) * (1 + 0.44) / period;
