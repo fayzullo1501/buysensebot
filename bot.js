@@ -40,12 +40,22 @@ function formatCurrency(amount) {
 
 function calculateInvestment(amount, period) {
   let result;
-  if (amount <= 3000000) {
-    result = (amount + (amount * 0.2)) * (1 + 0.44) / period;
-  } else if (amount <= 6000000) {
-    result = (amount + (amount * 0.15)) * (1 + 0.44) / period;
-  } else {
-    result = (amount + (amount + 1000000)) * (1 + 0.44) / period;
+  if (period === 12) {
+    if (amount <= 3000000) {
+      result = (amount + (amount * 0.2)) * (1 + 0.44) / 12;
+    } else if (amount <= 6000000) {
+      result = (amount + (amount * 0.15)) * (1 + 0.44) / 12;
+    } else {
+      result = (amount + 1000000) * (1 + 0.44) / 12;
+    }
+  } else if (period === 6) {
+    if (amount <= 3000000) {
+      result = (amount + (amount * 0.2)) * (1 + 0.26) / 6;
+    } else if (amount <= 6000000) {
+      result = (amount + (amount * 0.15)) * (1 + 0.26) / 6;
+    } else {
+      result = (amount + 1000000) * (1 + 0.26) / 6;
+    }
   }
   return formatCurrency(result);
 }
