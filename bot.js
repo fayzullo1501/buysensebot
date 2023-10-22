@@ -45,7 +45,7 @@ function calculateInvestment(amount, period) {
   } else if (amount <= 6000000) {
     result = (amount + (amount * 0.15)) * (1 + 0.44) / period;
   } else {
-    result = (amount + (amount * 0.1)) * (1 + 0.44) / period;
+    result = (amount + (amount + 1000000)) * (1 + 0.44) / period;
   }
   return formatCurrency(result);
 }
