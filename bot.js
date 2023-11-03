@@ -1,5 +1,3 @@
-// 6125338945:AAEFX_N-th4yt8QIVmh_C0aNyD2ssGr0uuA
-
 const TelegramBot = require('node-telegram-bot-api');
 const token = '6125338945:AAEFX_N-th4yt8QIVmh_C0aNyD2ssGr0uuA';
 const bot = new TelegramBot(token, { polling: true });
@@ -43,18 +41,18 @@ function calculateInvestment(amount, period) {
   if (period === 12) {
     if (amount <= 3000000) {
       result = (amount + (amount * 0.2)) * (1 + 0.44) / 12;
-    } else if (amount <= 6000000) {
+    } else if (amount <= 8000000) {
       result = (amount + (amount * 0.15)) * (1 + 0.44) / 12;
     } else {
-      result = (amount + 1000000) * (1 + 0.44) / 12;
+      result = (amount + (amount * 0.1)) * (1 + 0.44) / 12;
     }
   } else if (period === 6) {
     if (amount <= 3000000) {
       result = (amount + (amount * 0.2)) * (1 + 0.26) / 6;
-    } else if (amount <= 6000000) {
+    } else if (amount <= 8000000) {
       result = (amount + (amount * 0.15)) * (1 + 0.26) / 6;
     } else {
-      result = (amount + 1000000) * (1 + 0.26) / 6;
+      result = (amount + (amount * 0.1)) * (1 + 0.26) / 6;
     }
   }
   return formatCurrency(result);
