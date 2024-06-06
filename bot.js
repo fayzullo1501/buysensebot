@@ -9,7 +9,7 @@ const partners = {
   'IMAN PAY': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE NASIYA': { periods: {} } // Assuming no periods provided for BUYSENSE NASIYA
+  'BUYSENSE NASIYA': { periods: {'3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } } // Assuming no periods provided for BUYSENSE NASIYA
 };
 
 bot.onText(/\/start/, (msg) => {
