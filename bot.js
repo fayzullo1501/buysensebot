@@ -9,7 +9,7 @@ const partners = {
   'IMAN PAY': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE NASIYA': { periods: {'3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } } // Assuming no periods provided for BUYSENSE NASIYA
+  'BUYSENSE NASIYA': { periods: {} } // Assuming no periods provided for BUYSENSE NASIYA
 };
 
 bot.onText(/\/start/, (msg) => {
@@ -36,7 +36,7 @@ bot.onText(/Kalkulyator/, (msg) => {
   const partnerKeys = Object.keys(partners);
   const keyboard = {
     reply_markup: {
-      keyboard: partnerKeys.map(partner => [partner]),
+      keyboard: [...partnerKeys.map(partner => [partner]), ['Orqaga']],
       resize_keyboard: true,
     },
   };
@@ -50,7 +50,7 @@ bot.onText(new RegExp(Object.keys(partners).join('|')), (msg) => {
   const periods = partners[partner].periods;
   const keyboard = {
     reply_markup: {
-      keyboard: Object.keys(periods).map(period => [period]),
+      keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
       resize_keyboard: true,
     },
   };
@@ -64,10 +64,23 @@ bot.onText(new RegExp(Object.keys(partners).join('|')), (msg) => {
 
     bot.once('text', (msg) => {
       const amount = parseFloat(msg.text);
-      const result = calculateInstallment(amount, margin, period);
+      const result = calculateInstallment(amount, margin, parseInt(period));
       bot.sendMessage(chatId, `${period}ga: ${result} so'mdan`);
     });
   });
+});
+
+bot.onText(/Orqaga/, (msg) => {
+  const chatId = msg.chat.id;
+  const text = 'Hamkorni tanlang:';
+  const partnerKeys = Object.keys(partners);
+  const keyboard = {
+    reply_markup: {
+      keyboard: [...partnerKeys.map(partner => [partner]), ['Orqaga']],
+      resize_keyboard: true,
+    },
+  };
+  bot.sendMessage(chatId, text, keyboard);
 });
 
 function formatCurrency(amount) {
@@ -84,10 +97,9 @@ function calculateMargin(amount) {
   }
 }
 
-function calculateInstallment(amount, margin, period) {
+function calculateInstallment(amount, partnerMargin, months) {
   const buysenseMargin = calculateMargin(amount);
-  const totalAmount = amount + buysenseMargin + (amount * margin / 100);
-  const months = parseInt(period);
+  const totalAmount = amount + buysenseMargin + (amount * partnerMargin / 100);
   const installment = totalAmount / months;
   return formatCurrency(installment.toFixed(2));
 }
