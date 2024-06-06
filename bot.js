@@ -14,7 +14,7 @@ const partners = {
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
+  const text = 'Assalomu aleykum Fayzullo, BUYSENSE kalkulyatoriga xush kelibsiz!';
   const keyboard = {
     reply_markup: {
       keyboard: [['Kanal', 'Kalkulyator']],
