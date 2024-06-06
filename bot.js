@@ -4,13 +4,15 @@ const bot = new TelegramBot(token, { polling: true });
 
 const partners = {
   'UZUM NASIYA': { periods: { '3 oy': 11, '6 oy': 26, '12 oy': 44 } },
-  'BUYSENSE NASIYA': { periods: {'3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } },
   'INTEND': { periods: { '3 oy': 10, '6 oy': 20, '12 oy': 30 } },
   'ALIF NASIYA': { periods: { '1 oy': 27, '3 oy': 37, '6 oy': 26, '9 oy': 44, '12 oy': 50, '15 oy': 62, '18 oy': 68, '24 oy': 87 } },
   'IMAN PAY': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
+  'BUYSENSE NASIYA': { periods: {} }
 };
+
+const userState = {};
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
@@ -43,35 +45,54 @@ bot.onText(/Kalkulyator/, (msg) => {
   bot.sendMessage(chatId, text, keyboard);
 });
 
-bot.onText(new RegExp(Object.keys(partners).join('|')), (msg) => {
+bot.on('message', (msg) => {
   const chatId = msg.chat.id;
-  const partner = msg.text;
-  const text = 'Davrni tanlang:';
-  const periods = partners[partner].periods;
-  const keyboard = {
-    reply_markup: {
-      keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
-      resize_keyboard: true,
-    },
-  };
-  bot.sendMessage(chatId, text, keyboard);
+  const userId = msg.from.id;
 
-  bot.once('text', (msg) => {
-    if (msg.chat.id === chatId) {
+  if (!userState[userId]) {
+    userState[userId] = { step: 0 };
+  }
+
+  const step = userState[userId].step;
+
+  switch (step) {
+    case 1: // Choosing partner
+      const partner = msg.text;
+      if (partners[partner]) {
+        userState[userId].partner = partner;
+        const text = 'Davrni tanlang:';
+        const periods = partners[partner].periods;
+        const keyboard = {
+          reply_markup: {
+            keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
+            resize_keyboard: true,
+          },
+        };
+        bot.sendMessage(chatId, text, keyboard);
+        userState[userId].step = 2;
+      } else {
+        bot.sendMessage(chatId, 'Noto\'g\'ri tanlov. Iltimos, qaytadan tanlang.');
+      }
+      break;
+    case 2: // Choosing period
       const period = msg.text;
-      const margin = periods[period];
+      const margin = partners[userState[userId].partner].periods[period];
       const text = 'Summani kiriting:';
       bot.sendMessage(chatId, text);
-
-      bot.once('text', (msg) => {
-        if (msg.chat.id === chatId) {
-          const amount = parseFloat(msg.text);
-          const result = calculateInstallment(amount, margin, parseInt(period));
-          bot.sendMessage(chatId, `${period}ga: ${result} so'mdan`);
-        }
-      });
-    }
-  });
+      userState[userId].period = period;
+      userState[userId].margin = margin;
+      userState[userId].step = 3;
+      break;
+    case 3: // Entering amount
+      const amount = parseFloat(msg.text);
+      const result = calculateInstallment(amount, userState[userId].margin, parseInt(userState[userId].period));
+      bot.sendMessage(chatId, `${userState[userId].period}ga: ${result} so'mdan`);
+      delete userState[userId]; // Cleanup state after completion
+      break;
+    default:
+      userState[userId].step = 1;
+      break;
+  }
 });
 
 bot.onText(/Orqaga/, (msg) => {
@@ -85,6 +106,7 @@ bot.onText(/Orqaga/, (msg) => {
     },
   };
   bot.sendMessage(chatId, text, keyboard);
+  userState[msg.from.id] = { step: 1 }; // Reset to step 1
 });
 
 function formatCurrency(amount) {
@@ -103,8 +125,9 @@ function calculateMargin(amount) {
 
 function calculateInstallment(amount, partnerMargin, period) {
   const buysenseMargin = calculateMargin(amount);
-  const totalMargin = buysenseMargin + (amount * partnerMargin / 100);
-  const totalAmount = amount + totalMargin;
+  const amountWithBuysenseMargin = amount + buysenseMargin;
+  const totalMargin = amountWithBuysenseMargin * (partnerMargin / 100);
+  const totalAmount = amountWithBuysenseMargin + totalMargin;
   const months = parseInt(period);
   const installment = totalAmount / months;
   return formatCurrency(installment.toFixed(2));
