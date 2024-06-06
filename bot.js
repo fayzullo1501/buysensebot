@@ -4,12 +4,12 @@ const bot = new TelegramBot(token, { polling: true });
 
 const partners = {
   'UZUM NASIYA': { periods: { '3 oy': 11, '6 oy': 26, '12 oy': 44 } },
+  'BUYSENSE NASIYA': { periods: {'3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } },
   'INTEND': { periods: { '3 oy': 10, '6 oy': 20, '12 oy': 30 } },
   'ALIF NASIYA': { periods: { '1 oy': 27, '3 oy': 37, '6 oy': 26, '9 oy': 44, '12 oy': 50, '15 oy': 62, '18 oy': 68, '24 oy': 87 } },
   'IMAN PAY': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
-  'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE NASIYA': { periods: {} }
+  'OPEN': { periods: { '12 oy': 32 } }
 };
 
 const userState = {};
