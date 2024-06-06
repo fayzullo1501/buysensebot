@@ -12,8 +12,6 @@ const partners = {
   'BUYSENSE NASIYA': { periods: {} } // Assuming no periods provided for BUYSENSE NASIYA
 };
 
-const userState = {};
-
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
@@ -45,53 +43,35 @@ bot.onText(/Kalkulyator/, (msg) => {
   bot.sendMessage(chatId, text, keyboard);
 });
 
-bot.on('message', (msg) => {
+bot.onText(new RegExp(Object.keys(partners).join('|')), (msg) => {
   const chatId = msg.chat.id;
-  const userId = msg.from.id;
+  const partner = msg.text;
+  const text = 'Davrni tanlang:';
+  const periods = partners[partner].periods;
+  const keyboard = {
+    reply_markup: {
+      keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
+      resize_keyboard: true,
+    },
+  };
+  bot.sendMessage(chatId, text, keyboard);
 
-  if (!userState[userId]) {
-    userState[userId] = { step: 0 };
-  }
-
-  const step = userState[userId].step;
-
-  switch (step) {
-    case 1: // Choosing partner
-      const partner = msg.text;
-      if (partners[partner]) {
-        userState[userId].partner = partner;
-        const text = 'Davrni tanlang:';
-        const periods = partners[partner].periods;
-        const keyboard = {
-          reply_markup: {
-            keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
-            resize_keyboard: true,
-          },
-        };
-        bot.sendMessage(chatId, text, keyboard);
-        userState[userId].step = 2;
-      } else {
-        bot.sendMessage(chatId, 'Noto\'g\'ri tanlov. Iltimos, qaytadan tanlang.');
-      }
-      break;
-    case 2: // Choosing period
+  bot.once('text', (msg) => {
+    if (msg.chat.id === chatId) {
       const period = msg.text;
-      const margin = partners[userState[userId].partner].periods[period];
+      const margin = periods[period];
       const text = 'Summani kiriting:';
       bot.sendMessage(chatId, text);
-      userState[userId].period = period;
-      userState[userId].margin = margin;
-      userState[userId].step = 3;
-      break;
-    case 3: // Entering amount
-      const amount = parseFloat(msg.text);
-      const result = calculateInstallment(amount, userState[userId].margin, parseInt(userState[userId].period));
-      bot.sendMessage(chatId, `${userState[userId].period}ga: ${result} so'mdan`);
-      delete userState[userId]; // Cleanup state after completion
-      break;
-    default:
-      break;
-  }
+
+      bot.once('text', (msg) => {
+        if (msg.chat.id === chatId) {
+          const amount = parseFloat(msg.text);
+          const result = calculateInstallment(amount, margin, parseInt(period));
+          bot.sendMessage(chatId, `${period}ga: ${result} so'mdan`);
+        }
+      });
+    }
+  });
 });
 
 bot.onText(/Orqaga/, (msg) => {
