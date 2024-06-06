@@ -9,7 +9,7 @@ const partners = {
   'IMAN PAY': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE NASIYA': { periods: {'3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } } // Assuming no periods provided for BUYSENSE NASIYA
+  'BUYSENSE NASIYA': { periods: {} } // Assuming no periods provided for BUYSENSE NASIYA
 };
 
 bot.onText(/\/start/, (msg) => {
@@ -56,17 +56,21 @@ bot.onText(new RegExp(Object.keys(partners).join('|')), (msg) => {
   };
   bot.sendMessage(chatId, text, keyboard);
 
-  bot.onText(new RegExp(Object.keys(periods).join('|')), (msg) => {
-    const period = msg.text;
-    const margin = periods[period];
-    const text = 'Summani kiriting:';
-    bot.sendMessage(chatId, text);
+  bot.once('text', (msg) => {
+    if (msg.chat.id === chatId) {
+      const period = msg.text;
+      const margin = periods[period];
+      const text = 'Summani kiriting:';
+      bot.sendMessage(chatId, text);
 
-    bot.once('text', (msg) => {
-      const amount = parseFloat(msg.text);
-      const result = calculateInstallment(amount, margin, parseInt(period));
-      bot.sendMessage(chatId, `${period}ga: ${result} so'mdan`);
-    });
+      bot.once('text', (msg) => {
+        if (msg.chat.id === chatId) {
+          const amount = parseFloat(msg.text);
+          const result = calculateInstallment(amount, margin, parseInt(period));
+          bot.sendMessage(chatId, `${period}ga: ${result} so'mdan`);
+        }
+      });
+    }
   });
 });
 
@@ -97,9 +101,11 @@ function calculateMargin(amount) {
   }
 }
 
-function calculateInstallment(amount, partnerMargin, months) {
+function calculateInstallment(amount, partnerMargin, period) {
   const buysenseMargin = calculateMargin(amount);
-  const totalAmount = amount + buysenseMargin + (amount * partnerMargin / 100);
+  const totalMargin = buysenseMargin + (amount * partnerMargin / 100);
+  const totalAmount = amount + totalMargin;
+  const months = parseInt(period);
   const installment = totalAmount / months;
   return formatCurrency(installment.toFixed(2));
 }
