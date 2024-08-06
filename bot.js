@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const TelegramBot = require('node-telegram-bot-api');
 const token = '6125338945:AAEFX_N-th4yt8QIVmh_C0aNyD2ssGr0uuA';
 const bot = new TelegramBot(token, { polling: true });
@@ -9,7 +11,7 @@ const partners = {
   'IMAN pay': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE Nasiya': { periods: {} }
+  'BUYSENSE Nasiya': { periods: { '3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } }
 };
 
 const userState = {};
@@ -33,16 +35,8 @@ bot.onText(/Kanal/, (msg) => {
 });
 
 bot.onText(/Kalkulyator/, (msg) => {
-  const chatId = msg.chat.id;
-  const text = 'Hamkorni tanlang:';
-  const partnerKeys = Object.keys(partners);
-  const keyboard = {
-    reply_markup: {
-      keyboard: [...partnerKeys.map(partner => [partner]), ['Orqaga']],
-      resize_keyboard: true,
-    },
-  };
-  bot.sendMessage(chatId, text, keyboard);
+  sendPartnerSelection(msg.chat.id);
+  userState[msg.from.id] = { step: 1 };
 });
 
 bot.on('message', (msg) => {
@@ -54,60 +48,48 @@ bot.on('message', (msg) => {
   }
 
   const step = userState[userId].step;
+  const partner = msg.text;
 
-  switch (step) {
-    case 1: // Choosing partner
-      const partner = msg.text;
-      if (partners[partner]) {
-        userState[userId].partner = partner;
-        const text = 'Davrni tanlang:';
-        const periods = partners[partner].periods;
-        const keyboard = {
-          reply_markup: {
-            keyboard: [...Object.keys(periods).map(period => [period]), ['Orqaga']],
-            resize_keyboard: true,
-          },
-        };
-        bot.sendMessage(chatId, text, keyboard);
-        userState[userId].step = 2;
-      } else {
-        bot.sendMessage(chatId, 'Noto\'g\'ri tanlov. Iltimos, qaytadan tanlang.');
+  if (partners[partner]) {
+    // Partner selected, ask for amount
+    userState[userId].partner = partner;
+    const text = 'Summani kiriting:';
+    bot.sendMessage(chatId, text);
+    userState[userId].step = 2;
+  } else if (step === 2) {
+    // Amount entered
+    const amount = parseFloat(msg.text);
+    if (isNaN(amount) || amount <= 0) {
+      bot.sendMessage(chatId, 'Iltimos, to\'g\'ri summani kiriting.');
+    } else {
+      const periods = partners[userState[userId].partner].periods;
+      let resultText = 'Rassrochka hisob-kitoblari:\n';
+      for (let period in periods) {
+        const margin = periods[period];
+        const result = calculateInstallment(amount, margin, parseInt(period));
+        resultText += `${period}: ${result} so'mdan\n`;
       }
-      break;
-    case 2: // Choosing period
-      const period = msg.text;
-      const margin = partners[userState[userId].partner].periods[period];
-      const text = 'Summani kiriting:';
-      bot.sendMessage(chatId, text);
-      userState[userId].period = period;
-      userState[userId].margin = margin;
-      userState[userId].step = 3;
-      break;
-    case 3: // Entering amount
-      const amount = parseFloat(msg.text);
-      const result = calculateInstallment(amount, userState[userId].margin, parseInt(userState[userId].period));
-      bot.sendMessage(chatId, `${userState[userId].period}ga: ${result} so'mdan`);
-      delete userState[userId]; // Cleanup state after completion
-      break;
-    default:
-      userState[userId].step = 1;
-      break;
+      bot.sendMessage(chatId, resultText);
+      sendPartnerSelection(chatId); // Return to partner selection
+      userState[userId].step = 1; // Reset state to allow new partner selection
+    }
+  } else {
+    bot.sendMessage(chatId, 'Noto\'g\'ri tanlov. Iltimos, qaytadan tanlang.');
+    sendPartnerSelection(chatId);
   }
 });
 
-bot.onText(/Orqaga/, (msg) => {
-  const chatId = msg.chat.id;
+function sendPartnerSelection(chatId) {
   const text = 'Hamkorni tanlang:';
   const partnerKeys = Object.keys(partners);
   const keyboard = {
     reply_markup: {
-      keyboard: [...partnerKeys.map(partner => [partner]), ['Orqaga']],
+      keyboard: partnerKeys.map(partner => [partner]),
       resize_keyboard: true,
     },
   };
   bot.sendMessage(chatId, text, keyboard);
-  userState[msg.from.id] = { step: 1 }; // Reset to step 1
-});
+}
 
 function formatCurrency(amount) {
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
