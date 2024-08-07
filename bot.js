@@ -4,6 +4,8 @@ const TelegramBot = require('node-telegram-bot-api');
 const token = '6125338945:AAEFX_N-th4yt8QIVmh_C0aNyD2ssGr0uuA';
 const bot = new TelegramBot(token, { polling: true });
 
+const adminChatIds = ['472768937', '446415034']; // Replace with actual admin chat_ids
+
 const partners = {
   'UZUM Nasiya': { periods: { '3 oy': 11, '6 oy': 26, '12 oy': 44 } },
   'InTend': { periods: { '3 oy': 10, '6 oy': 20, '12 oy': 30 } },
@@ -15,9 +17,12 @@ const partners = {
 };
 
 const userState = {};
+const subscribers = new Set(); // For storing chat_ids of all users
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
+  subscribers.add(chatId); // Add every user to the subscribers set
+
   const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
   const keyboard = {
     reply_markup: {
@@ -39,6 +44,16 @@ bot.onText(/Kalkulyator/, (msg) => {
   userState[msg.from.id] = { step: 1 };
 });
 
+bot.onText(/\/post/, (msg) => {
+  const chatId = msg.chat.id;
+  if (adminChatIds.includes(chatId.toString())) {
+    userState[chatId] = { step: 'awaiting_post' };
+    bot.sendMessage(chatId, 'Please enter the text for the post:');
+  } else {
+    bot.sendMessage(chatId, 'You do not have permission to use this command.');
+  }
+});
+
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -48,13 +63,18 @@ bot.on('message', (msg) => {
   }
 
   const step = userState[userId].step;
-  const partner = msg.text;
 
-  if (partners[partner]) {
-    // Partner selected, ask for amount
-    userState[userId].partner = partner;
-    const text = 'Summani kiriting:';
-    bot.sendMessage(chatId, text);
+  if (step === 'awaiting_post' && adminChatIds.includes(chatId.toString())) {
+    // Admin is entering post text
+    const postText = msg.text;
+    subscribers.forEach((id) => {
+      bot.sendMessage(id, postText);
+    });
+    userState[chatId] = { step: 0 };
+  } else if (partners[msg.text]) {
+    // Partner selected
+    userState[userId].partner = msg.text;
+    bot.sendMessage(chatId, 'Summani kiriting:');
     userState[userId].step = 2;
   } else if (step === 2) {
     // Amount entered
