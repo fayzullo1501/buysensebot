@@ -79,7 +79,7 @@ bot.on('message', (msg) => {
     userState[userId].partner = msg.text;
     bot.sendMessage(chatId, 'Summani kiriting:', {
       reply_markup: {
-        keyboard: [['На главную']],
+        keyboard: [['Orqaga']],
         resize_keyboard: true,
       },
     });
@@ -112,7 +112,7 @@ function sendMainMenu(chatId) {
   const keyboard = {
     reply_markup: {
       keyboard: adminChatIds.includes(chatId.toString())
-        ? [['Kanal', 'Kalkulyator', 'Разместить новость']]
+        ? [['Kanal', 'Kalkulyator', 'Yangilik qoshish']]
         : [['Kanal', 'Kalkulyator']],
       resize_keyboard: true,
     },
@@ -125,7 +125,7 @@ function sendPartnerSelection(chatId) {
   const partnerKeys = Object.keys(partners);
   const keyboard = {
     reply_markup: {
-      keyboard: [...partnerKeys.map(partner => [partner]), ['На главную']],
+      keyboard: [...partnerKeys.map(partner => [partner]), ['Orqaga']],
       resize_keyboard: true,
     },
   };
