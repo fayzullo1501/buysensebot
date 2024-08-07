@@ -72,14 +72,14 @@ bot.on('message', (msg) => {
       userState[chatId] = { step: 0 };
       sendMainMenu(chatId); // Return admin to main menu
     } else {
-      bot.sendMessage(chatId, 'Пожалуйста, отправьте изображение с текстом.');
+      bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
     }
   } else if (partners[msg.text]) {
     // Partner selected
     userState[userId].partner = msg.text;
     bot.sendMessage(chatId, 'Summani kiriting:', {
       reply_markup: {
-        keyboard: [['Orqaga']],
+        keyboard: [...Object.keys(partners).map(partner => [partner]), ['Orqaga']],
         resize_keyboard: true,
       },
     });
@@ -99,7 +99,7 @@ bot.on('message', (msg) => {
       }
       bot.sendMessage(chatId, resultText, {
         reply_markup: {
-          keyboard: [['Orqaga']],
+          keyboard: [...Object.keys(partners).map(partner => [partner]), ['Orqaga']],
           resize_keyboard: true,
         },
       });
