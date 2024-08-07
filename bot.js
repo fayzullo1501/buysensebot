@@ -36,17 +36,17 @@ bot.onText(/Kalkulyator/, (msg) => {
   userState[msg.from.id] = { step: 1 };
 });
 
-bot.onText(/Разместить новость/, (msg) => {
+bot.onText(/Yangilik qoshish/, (msg) => {
   const chatId = msg.chat.id;
   if (adminChatIds.includes(chatId.toString())) {
     userState[chatId] = { step: 'awaiting_post' };
-    bot.sendMessage(chatId, 'Пожалуйста, введите текст новости:');
+    bot.sendMessage(chatId, 'Пожалуйста, отправьте изображение с текстом новости:');
   } else {
     bot.sendMessage(chatId, 'У вас нет прав для использования этой команды.');
   }
 });
 
-bot.onText(/На главную/, (msg) => {
+bot.onText(/Orqaga/, (msg) => {
   sendMainMenu(msg.chat.id);
   userState[msg.from.id] = { step: 0 };
 });
@@ -63,12 +63,17 @@ bot.on('message', (msg) => {
 
   if (step === 'awaiting_post' && adminChatIds.includes(chatId.toString())) {
     // Admin is entering post text
-    const postText = msg.text;
-    subscribers.forEach((id) => {
-      bot.sendMessage(id, postText);
-    });
-    userState[chatId] = { step: 0 };
-    sendMainMenu(chatId); // Return admin to main menu
+    if (msg.photo) {
+      const photo = msg.photo[msg.photo.length - 1].file_id;
+      const caption = msg.caption || '';
+      subscribers.forEach((id) => {
+        bot.sendPhoto(id, photo, { caption: caption });
+      });
+      userState[chatId] = { step: 0 };
+      sendMainMenu(chatId); // Return admin to main menu
+    } else {
+      bot.sendMessage(chatId, 'Пожалуйста, отправьте изображение с текстом.');
+    }
   } else if (partners[msg.text]) {
     // Partner selected
     userState[userId].partner = msg.text;
@@ -92,9 +97,12 @@ bot.on('message', (msg) => {
         const result = calculateInstallment(amount, margin, parseInt(period));
         resultText += `${period}: ${result} so'mdan\n`;
       }
-      bot.sendMessage(chatId, resultText);
-      sendMainMenu(chatId); // Return to main menu after calculation
-      userState[userId].step = 1; // Reset state to allow new partner selection
+      bot.sendMessage(chatId, resultText, {
+        reply_markup: {
+          keyboard: [['Orqaga']],
+          resize_keyboard: true,
+        },
+      });
     }
   }
 });
