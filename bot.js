@@ -22,15 +22,7 @@ const subscribers = new Set(); // For storing chat_ids of all users
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   subscribers.add(chatId); // Add every user to the subscribers set
-
-  const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
-  const keyboard = {
-    reply_markup: {
-      keyboard: [['Kanal', 'Kalkulyator']],
-      resize_keyboard: true,
-    },
-  };
-  bot.sendMessage(chatId, text, keyboard);
+  sendMainMenu(chatId);
 });
 
 bot.onText(/Kanal/, (msg) => {
@@ -44,14 +36,19 @@ bot.onText(/Kalkulyator/, (msg) => {
   userState[msg.from.id] = { step: 1 };
 });
 
-bot.onText(/\/post/, (msg) => {
+bot.onText(/Разместить новость/, (msg) => {
   const chatId = msg.chat.id;
   if (adminChatIds.includes(chatId.toString())) {
     userState[chatId] = { step: 'awaiting_post' };
-    bot.sendMessage(chatId, 'Please enter the text for the post:');
+    bot.sendMessage(chatId, 'Пожалуйста, введите текст новости:');
   } else {
-    bot.sendMessage(chatId, 'You do not have permission to use this command.');
+    bot.sendMessage(chatId, 'У вас нет прав для использования этой команды.');
   }
+});
+
+bot.onText(/На главную/, (msg) => {
+  sendMainMenu(msg.chat.id);
+  userState[msg.from.id] = { step: 0 };
 });
 
 bot.on('message', (msg) => {
@@ -71,10 +68,16 @@ bot.on('message', (msg) => {
       bot.sendMessage(id, postText);
     });
     userState[chatId] = { step: 0 };
+    sendMainMenu(chatId); // Return admin to main menu
   } else if (partners[msg.text]) {
     // Partner selected
     userState[userId].partner = msg.text;
-    bot.sendMessage(chatId, 'Summani kiriting:');
+    bot.sendMessage(chatId, 'Summani kiriting:', {
+      reply_markup: {
+        keyboard: [['На главную']],
+        resize_keyboard: true,
+      },
+    });
     userState[userId].step = 2;
   } else if (step === 2) {
     // Amount entered
@@ -90,21 +93,31 @@ bot.on('message', (msg) => {
         resultText += `${period}: ${result} so'mdan\n`;
       }
       bot.sendMessage(chatId, resultText);
-      sendPartnerSelection(chatId); // Return to partner selection
+      sendMainMenu(chatId); // Return to main menu after calculation
       userState[userId].step = 1; // Reset state to allow new partner selection
     }
-  } else {
-    bot.sendMessage(chatId, 'Noto\'g\'ri tanlov. Iltimos, qaytadan tanlang.');
-    sendPartnerSelection(chatId);
   }
 });
+
+function sendMainMenu(chatId) {
+  const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
+  const keyboard = {
+    reply_markup: {
+      keyboard: adminChatIds.includes(chatId.toString())
+        ? [['Kanal', 'Kalkulyator', 'Разместить новость']]
+        : [['Kanal', 'Kalkulyator']],
+      resize_keyboard: true,
+    },
+  };
+  bot.sendMessage(chatId, text, keyboard);
+}
 
 function sendPartnerSelection(chatId) {
   const text = 'Hamkorni tanlang:';
   const partnerKeys = Object.keys(partners);
   const keyboard = {
     reply_markup: {
-      keyboard: partnerKeys.map(partner => [partner]),
+      keyboard: [...partnerKeys.map(partner => [partner]), ['На главную']],
       resize_keyboard: true,
     },
   };
