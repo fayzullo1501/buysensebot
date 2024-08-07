@@ -40,9 +40,9 @@ bot.onText(/Yangilik qoshish/, (msg) => {
   const chatId = msg.chat.id;
   if (adminChatIds.includes(chatId.toString())) {
     userState[chatId] = { step: 'awaiting_post' };
-    bot.sendMessage(chatId, 'Пожалуйста, отправьте изображение с текстом новости:');
+    bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
   } else {
-    bot.sendMessage(chatId, 'У вас нет прав для использования этой команды.');
+    bot.sendMessage(chatId, 'Siz administrator emassiz');
   }
 });
 
