@@ -13,7 +13,8 @@ const partners = {
   'IMAN pay': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
   'SOLFY': { periods: { '3 oy': 8 } },
   'OPEN': { periods: { '12 oy': 32 } },
-  'BUYSENSE Nasiya': { periods: { '3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } }
+  'BUYSENSE Nasiya': { periods: { '3 oy': 30, '6 oy': 48, '9 oy': 62, '12 oy': 77 } },
+  'StarPower': { periods: { '3 oy': 25, '6 oy': 42, '9 oy': 57, '12 oy': 72 }, requiresDownPayment: true }
 };
 
 const userState = {};
@@ -90,12 +91,21 @@ bot.on('message', (msg) => {
     if (isNaN(amount) || amount <= 0) {
       bot.sendMessage(chatId, 'Iltimos, to\'g\'ri summani kiriting.');
     } else {
-      const periods = partners[userState[userId].partner].periods;
+      const partner = partners[userState[userId].partner];
+      const periods = partner.periods;
       let resultText = 'Rassrochka hisob-kitoblari:\n';
+
       for (let period in periods) {
         const margin = periods[period];
-        const result = calculateInstallment(amount, margin, parseInt(period));
-        resultText += `${period}: ${result} so'mdan\n`;
+        if (partner.requiresDownPayment) {
+          // Special calculation for StarPower
+          const { totalAmount, downPayment, monthlyInstallment } = calculateInstallmentWithDownPayment(amount, margin, period);
+          resultText += `${period}: Umumiy summa: ${totalAmount} so'm, Boshlang'ich to'lov: ${downPayment} so'm, Oyiga: ${monthlyInstallment} so'm\n`;
+        } else {
+          // Regular calculation for other partners
+          const installment = calculateInstallment(amount, margin, parseInt(period));
+          resultText += `${period}: ${installment} so'mdan\n`;
+        }
       }
       bot.sendMessage(chatId, resultText, {
         reply_markup: {
@@ -154,6 +164,18 @@ function calculateInstallment(amount, partnerMargin, period) {
   const months = parseInt(period);
   const installment = totalAmount / months;
   return formatCurrency(installment.toFixed(2));
+}
+
+function calculateInstallmentWithDownPayment(amount, partnerMargin, period) {
+  const totalWithMargin = amount * (1 + partnerMargin / 100);
+  const downPayment = totalWithMargin * 0.25;
+  const remainingAmount = totalWithMargin - downPayment;
+  const monthlyInstallment = remainingAmount / parseInt(period);
+  return {
+    totalAmount: formatCurrency(totalWithMargin.toFixed(2)),
+    downPayment: formatCurrency(downPayment.toFixed(2)),
+    monthlyInstallment: formatCurrency(monthlyInstallment.toFixed(2)),
+  };
 }
 
 bot.on('polling_error', (error) => {
