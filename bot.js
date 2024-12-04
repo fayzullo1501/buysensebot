@@ -7,7 +7,7 @@ const bot = new TelegramBot(token, { polling: true });
 const adminChatIds = ['472768937', '446415034']; // Replace with actual admin chat_ids
 
 const partners = {
-  'UZUM Nasiya': { periods: { '3 oy': 11, '6 oy': 26, '12 oy': 44 } },
+  'UZUM Nasiya': { periods: { '3 oy': 11, '6 oy': 35, '12 oy': 44 } },
   'InTend': { periods: { '3 oy': 10, '6 oy': 20, '12 oy': 30 } },
   'alif nasiya': { periods: { '1 oy': 27, '3 oy': 37, '6 oy': 26, '9 oy': 44, '12 oy': 50, '15 oy': 62, '18 oy': 68, '24 oy': 87 } },
   'IMAN pay': { periods: { '3 oy': 31, '6 oy': 41, '9 oy': 51, '12 oy': 58 } },
