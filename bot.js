@@ -148,11 +148,11 @@ function formatCurrency(amount) {
 
 function calculateMargin(amount) {
   if (amount <= 3000000) {
-    return amount * 0.2;
+    return amount * 0.21;
   } else if (amount <= 8000000) {
-    return amount * 0.15;
+    return amount * 0.16;
   } else {
-    return amount * 0.1;
+    return amount * 0.11;
   }
 }
 
