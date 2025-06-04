@@ -39,8 +39,9 @@ bot.onText(/Kalkulyator/, (msg) => {
 
 bot.onText(/Yangilik qoshish/, (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id;
   if (adminChatIds.includes(chatId.toString())) {
-    userState[chatId] = { step: 'awaiting_post' };
+    userState[userId] = { step: 'awaiting_post' };
     bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
   } else {
     bot.sendMessage(chatId, 'Siz administrator emassiz');
@@ -70,7 +71,7 @@ bot.on('message', (msg) => {
       subscribers.forEach((id) => {
         bot.sendPhoto(id, photo, { caption: caption });
       });
-      userState[chatId] = { step: 0 };
+      userState[userId] = { step: 0 };
       sendMainMenu(chatId); // Return admin to main menu
     } else {
       bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
