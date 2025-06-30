@@ -1,10 +1,10 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const TelegramBot = require('node-telegram-bot-api');
-const token = '7975577891:AAGDJlJWZP86kxYNs5v92sN4JisTGdMepWg';
+const token = '7975577891:AAGDJlJWZP86kxYNs5v92sN4JisTGdMepWg'; // Замените на ваш токен
 const bot = new TelegramBot(token, { polling: true });
 
-const adminChatIds = ['472768937', '446415034']; // Replace with actual admin chat_ids
+const adminChatIds = ['472768937', '446415034'];
 
 const partners = {
   'UZUM Nasiya': { periods: { '3 oy': 11, '6 oy': 29, '12 oy': 44 } },
@@ -18,11 +18,9 @@ const partners = {
 };
 
 const userState = {};
-const subscribers = new Set(); // For storing chat_ids of all users
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  subscribers.add(chatId); // Add every user to the subscribers set
   sendMainMenu(chatId);
 });
 
@@ -35,16 +33,6 @@ bot.onText(/Kanal/, (msg) => {
 bot.onText(/Kalkulyator/, (msg) => {
   sendPartnerSelection(msg.chat.id);
   userState[msg.from.id] = { step: 1 };
-});
-
-bot.onText(/Yangilik qoshish/, (msg) => {
-  const chatId = msg.chat.id;
-  if (adminChatIds.includes(chatId.toString())) {
-    userState[chatId] = { step: 'awaiting_post' };
-    bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
-  } else {
-    bot.sendMessage(chatId, 'Siz administrator emassiz');
-  }
 });
 
 bot.onText(/Orqaga/, (msg) => {
@@ -62,21 +50,7 @@ bot.on('message', (msg) => {
 
   const step = userState[userId].step;
 
-  if (step === 'awaiting_post' && adminChatIds.includes(chatId.toString())) {
-    // Admin is entering post text
-    if (msg.photo) {
-      const photo = msg.photo[msg.photo.length - 1].file_id;
-      const caption = msg.caption || '';
-      subscribers.forEach((id) => {
-        bot.sendPhoto(id, photo, { caption: caption });
-      });
-      userState[chatId] = { step: 0 };
-      sendMainMenu(chatId); // Return admin to main menu
-    } else {
-      bot.sendMessage(chatId, 'Iltimos, rasm va matnni joylang.');
-    }
-  } else if (partners[msg.text]) {
-    // Partner selected
+  if (partners[msg.text]) {
     userState[userId].partner = msg.text;
     bot.sendMessage(chatId, 'Summani kiriting:', {
       reply_markup: {
@@ -86,7 +60,6 @@ bot.on('message', (msg) => {
     });
     userState[userId].step = 2;
   } else if (step === 2) {
-    // Amount entered
     const amount = parseFloat(msg.text);
     if (isNaN(amount) || amount <= 0) {
       bot.sendMessage(chatId, 'Iltimos, to\'g\'ri summani kiriting.');
@@ -98,11 +71,9 @@ bot.on('message', (msg) => {
       for (let period in periods) {
         const margin = periods[period];
         if (partner.requiresDownPayment) {
-          // Special calculation for StarPower
           const { totalAmount, downPayment, monthlyInstallment } = calculateInstallmentWithDownPayment(amount, margin, period);
           resultText += `${period}: Umumiy summa: ${totalAmount} so'm, Boshlang'ich to'lov: ${downPayment} so'm, Oyiga: ${monthlyInstallment} so'm\n`;
         } else {
-          // Regular calculation for other partners
           const installment = calculateInstallment(amount, margin, parseInt(period));
           resultText += `${period}: ${installment} so'mdan\n`;
         }
@@ -121,9 +92,7 @@ function sendMainMenu(chatId) {
   const text = 'Assalomu aleykum, BUYSENSE kalkulyatoriga xush kelibsiz!';
   const keyboard = {
     reply_markup: {
-      keyboard: adminChatIds.includes(chatId.toString())
-        ? [['Kanal', 'Kalkulyator', 'Yangilik qoshish']]
-        : [['Kanal', 'Kalkulyator']],
+      keyboard: [['Kanal', 'Kalkulyator']],
       resize_keyboard: true,
     },
   };
