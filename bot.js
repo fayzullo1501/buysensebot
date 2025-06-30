@@ -1,7 +1,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const TelegramBot = require('node-telegram-bot-api');
-const token = '6125338945:AAEFX_N-th4yt8QIVmh_C0aNyD2ssGr0uuA';
+const token = '7975577891:AAGDJlJWZP86kxYNs5v92sN4JisTGdMepWg';
 const bot = new TelegramBot(token, { polling: true });
 
 const adminChatIds = ['472768937', '446415034']; // Replace with actual admin chat_ids
